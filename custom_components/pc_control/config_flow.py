@@ -3,6 +3,7 @@ import logging
 import aiohttp
 import async_timeout
 import voluptuous as vol
+import asyncio
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT

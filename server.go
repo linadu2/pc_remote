@@ -54,7 +54,7 @@ func StartServer(cfg Config) {
 		}
 
 		if req.Action == "play_pause" {
-			kb.SetKeys(keybd_event.VK_MEDIA_PLAY_PAUSE)
+			kb.SetKeys(MediaPlayPause)
 			if err := kb.Launching(); err != nil {
 				log.Printf("Key press error: %v", err)
 			} else {

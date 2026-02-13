@@ -7,7 +7,7 @@ import asyncio
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
-from .const import DOMAIN, DEFAULT_PORT, DEFAULT_NAME, CONF_ACCESS_TOKEN
+from .const import DOMAIN, DEFAULT_PORT, DEFAULT_NAME, CONF_ACCESS_TOKEN, CONF_MAC_ADDRESS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,6 +16,7 @@ DATA_SCHEMA = vol.Schema({
     vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
     vol.Required(CONF_ACCESS_TOKEN): str,
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): str,
+    vol.Optional(CONF_MAC_ADDRESS): str,
 })
 
 async def validate_input(hass, data):

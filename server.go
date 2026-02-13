@@ -53,13 +53,25 @@ func StartServer(cfg Config) {
 			return
 		}
 
-		if req.Action == "play_pause" {
-			kb.SetKeys(MediaPlayPause)
-			if err := kb.Launching(); err != nil {
-				log.Printf("Key press error: %v", err)
-			} else {
-				log.Println("Action: Play/Pause")
-			}
+		switch req.Action {
+		case "play_pause":
+			kb.SetKeys(KeyPlayPause)
+			kb.Launching()
+			log.Printf("Play/paused")
+		case "next":
+			kb.SetKeys(KeyNext)
+			kb.Launching()
+			log.Printf("Next")
+		case "prev":
+			kb.SetKeys(KeyPrev)
+			kb.Launching()
+			log.Printf("Prev")
+		case "stop":
+			kb.SetKeys(KeyStop)
+			kb.Launching()
+			log.Printf("Stop")
+		case "turn_off":
+			shutdownSystem()
 		}
 		w.WriteHeader(http.StatusOK)
 	}))

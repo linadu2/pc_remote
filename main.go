@@ -1,3 +1,5 @@
+//go:generate go build -ldflags "-H=windowsgui" -o PCControl.exe .
+
 package main
 
 import (

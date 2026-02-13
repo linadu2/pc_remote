@@ -14,7 +14,7 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_PORT,
 )
-from .const import CONF_ACCESS_TOKEN
+from .const import CONF_ACCESS_TOKEN, CONF_MAC_ADDRESS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,19 +29,21 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     port = config[CONF_PORT]
     name = config[CONF_NAME]
     token = config[CONF_ACCESS_TOKEN]
+    mac = config.get(CONF_MAC_ADDRESS)
 
-    entity = PCMediaPlayer(name, host, port, token)
+    entity = PCMediaPlayer(name, host, port, token, mac)
     async_add_entities([entity], update_before_add=False)
 
 
 class PCMediaPlayer(MediaPlayerEntity):
     """Representation of the PC Media Player."""
 
-    def __init__(self, name, host, port, token):
+    def __init__(self, name, host, port, token, mac):
         self._name = name
         self._host = host
         self._port = port
         self._token = token
+        self._mac = mac
         self._volume = 0.0
         self._state = MediaPlayerState.OFF
         self._available = True
@@ -78,12 +80,19 @@ class PCMediaPlayer(MediaPlayerEntity):
 
     @property
     def supported_features(self):
-        # REMOVED: TURN_OFF / TURN_ON to hide the power button
-        return (
+        features = (
             MediaPlayerEntityFeature.PLAY
             | MediaPlayerEntityFeature.PAUSE
+            | MediaPlayerEntityFeature.STOP
+            | MediaPlayerEntityFeature.NEXT_TRACK
+            | MediaPlayerEntityFeature.PREVIOUS_TRACK
             | MediaPlayerEntityFeature.VOLUME_SET
+            | MediaPlayerEntityFeature.TURN_OFF
         )
+        # Only support TURN_ON if we have a MAC address
+        if self._mac:
+            features |= MediaPlayerEntityFeature.TURN_ON
+        return features
 
     async def async_update(self):
         if self._session is None or self._session.closed:
@@ -97,7 +106,7 @@ class PCMediaPlayer(MediaPlayerEntity):
                 if response.status == 200:
                     data = await response.json()
                     self._volume = data.get("volume", 0) / 100.0
-                    self._state = MediaPlayerState.IDLE
+                    self._state = MediaPlayerState.PLAYING
                 else:
                     self._state = MediaPlayerState.OFF
                     
@@ -106,6 +115,26 @@ class PCMediaPlayer(MediaPlayerEntity):
         except Exception as e:
             _LOGGER.error("Error updating: %s", e)
             self._state = MediaPlayerState.OFF
+
+    async def async_turn_on(self):
+            """Turn the media player on."""
+            if self._mac:
+                await self.hass.services.async_call(
+                    "wake_on_lan", "send_magic_packet", {"mac": self._mac}
+                )
+
+    async def async_turn_off(self):
+        await self._send_action("turn_off")
+
+    async def async_media_next_track(self):
+
+        await self._send_action("next")
+
+    async def async_media_previous_track(self):
+        await self._send_action("prev")
+
+    async def async_media_stop(self):
+        await self._send_action("stop")
 
     async def async_media_play(self):
         await self._send_action("play_pause")
